@@ -1,0 +1,15 @@
+---
+layout: base.njk
+---
+<article class="log-entry">
+    <div class="entry-meta">
+        <span class="entry-id">RECORD</span>
+        <span>{{ date | blogdate }}</span>
+        <span>[{{ category | upper }}]</span>
+    </div>
+    <h2 class="entry-title">{{ title }}</h2>
+    <div class="post-content" style="margin-top: 14px;">
+        {{ content | safe }}
+    </div>
+    <a href="/" class="action-btn" style="margin-top: 20px;">← Back to Logs</a>
+</article>

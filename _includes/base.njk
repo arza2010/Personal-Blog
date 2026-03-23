@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% if title %}{{ title | upper }} // HARSHA.SYS{% elif page.url == "/" %}HARSHA.SYS // LOGS{% elif page.url == "/about/" %}ABOUT // HARSHA.SYS{% else %}HARSHA.SYS{% endif %}</title>
+    <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+    <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+    <style>
+        :root {
+            --bg-lcd: #a2ac91;
+            --bg-lcd-darker: #96a184;
+            --ink-main: #12140e;
+            --ink-ghost: #828f73;
+            --ink-ghost-light: rgba(130, 143, 115, 0.4);
+            --bezel: #2a2c29;
+            --bezel-highlight: #3e413c;
+            --bezel-shadow: #1a1c19;
+            --border-width: 2px;
+            --font-main: 'VT323', monospace;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; cursor: crosshair; }
+
+        body {
+            background-color: #111;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100svh;
+            font-family: var(--font-main);
+            color: var(--ink-main);
+            text-transform: uppercase;
+            /* FIX 5: no padding on mobile, add on larger screens */
+            padding: 0;
+        }
+
+        /* ── Device wrapper ── */
+        .device-wrapper {
+            background: var(--bezel);
+            border-radius: 0;
+            box-shadow: none;
+            position: relative;
+            width: 100%;
+            /* no max-width — fills full screen on desktop */
+            padding: 0;
+        }
+
+        .screen-bezel {
+            background: #000;
+            padding: 0;
+            border-radius: 0;
+        }
+
+        /* ── Screen ── */
+        .screen {
+            background-color: var(--bg-lcd);
+            position: relative;
+            overflow: hidden;
+            border-radius: 0;
+            /* FIX 1: no fixed height — let content define height */
+            min-height: 100svh;
+            display: flex;
+            flex-direction: column;
+            border: none;
+        }
+
+        /* scanlines */
+        .screen::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-image:
+                linear-gradient(rgba(18,20,14,0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(18,20,14,0.05) 1px, transparent 1px);
+            background-size: 4px 4px;
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        /* scan line sweep */
+        .screen::after {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; right: 0; height: 10px;
+            background: rgba(18,20,14,0.1);
+            animation: scan 8s linear infinite;
+            pointer-events: none;
+            z-index: 101;
+        }
+
+        @keyframes scan { 0% { top: -10px; } 100% { top: 100%; } }
+
+        h1, h2, h3, p, span, div { font-size: 22px; line-height: 1.2; letter-spacing: 0.5px; }
+        a { color: var(--ink-main); text-decoration: none; }
+
+        /* ── Telemetry bar ── */
+        .telemetry-bar {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            border-bottom: var(--border-width) solid var(--ink-main);
+            background: var(--bg-lcd-darker);
+            z-index: 2;
+            flex-shrink: 0;
+        }
+
+        .stat-block {
+            padding: 6px 8px;
+            border-right: var(--border-width) solid var(--ink-main);
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .stat-block:last-child { border-right: none; }
+        .stat-sub { font-size: 11px; color: var(--ink-main); opacity: 0.55; letter-spacing: 0.5px; min-height: 13px; display: block; }
+        .stat-label { font-size: 16px; font-weight: bold; }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            border: 2px solid var(--ink-main);
+            border-radius: 10px;
+            padding: 1px;
+        }
+        .progress-fill { height: 100%; background: var(--ink-main); border-radius: 4px; transition: width 1.2s ease; }
+
+        /* ── Main layout ── */
+        .main-display {
+            display: flex;
+            flex-direction: column; /* FIX 2: mobile-first = stacked */
+            flex-grow: 1;
+        }
+
+        /* ── Sidebar ── */
+        .sidebar {
+            border-bottom: var(--border-width) solid var(--ink-main);
+            padding: 16px;
+            display: flex;
+            flex-direction: row; /* horizontal on mobile */
+            gap: 16px;
+            align-items: flex-start;
+            z-index: 2;
+            background: var(--bg-lcd-darker);
+            flex-wrap: wrap;
+        }
+
+        .avatar-container {
+            width: 80px;
+            height: 80px;
+            flex-shrink: 0;
+            border: var(--border-width) solid var(--ink-main);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            background: var(--bg-lcd-darker);
+            overflow: hidden;
+        }
+
+        .pixel-pet { width: 60px; height: 60px; position: relative; animation: float 4s ease-in-out infinite; }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+        .pet-ghost { position: absolute; top: 2px; left: -2px; width: 100%; height: 100%; opacity: 0.6; z-index: 1; }
+        .pet-main { position: relative; z-index: 2; }
+
+        .sys-info {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            flex: 1;
+            min-width: 140px;
+        }
+
+        .info-line {
+            display: flex;
+            justify-content: space-between;
+            font-size: 18px;
+            border-bottom: 2px dotted var(--ink-ghost);
+            padding-bottom: 2px;
+        }
+        .info-label { color: var(--ink-main); opacity: 0.6; }
+
+        .sys-message { display: none; } /* hidden on mobile */
+
+        /* ── Feed ── */
+        .log-feed {
+            padding: 20px 16px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 32px;
+            z-index: 2;
+        }
+
+        .log-feed::-webkit-scrollbar { width: 12px; }
+        .log-feed::-webkit-scrollbar-track { background: var(--bg-lcd); }
+        .log-feed::-webkit-scrollbar-thumb { background: var(--ink-main); border: 2px solid var(--bg-lcd); }
+
+        .log-entry { display: flex; flex-direction: column; gap: 8px; }
+
+        .entry-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            font-size: 16px;
+            color: var(--ink-ghost);
+            border-bottom: 2px solid var(--ink-main);
+            padding-bottom: 4px;
+            margin-bottom: 4px;
+        }
+
+        .entry-id { background: var(--ink-main); color: var(--bg-lcd); padding: 0 6px; }
+        .entry-title { font-size: 26px; line-height: 1.1; text-shadow: 2px 2px 0px var(--ink-ghost-light); }
+        .entry-excerpt { font-size: 20px; line-height: 1.4; margin-bottom: 10px; }
+
+        .action-btn {
+            align-self: flex-start;
+            background: transparent;
+            border: var(--border-width) solid var(--ink-main);
+            color: var(--ink-main);
+            padding: 6px 14px;
+            font-family: var(--font-main);
+            font-size: 18px;
+            text-transform: uppercase;
+            position: relative;
+            display: inline-block;
+        }
+        .action-btn::before { content: '>'; position: absolute; left: 4px; opacity: 0; }
+        .action-btn:hover { background: var(--ink-main); color: var(--bg-lcd); padding-left: 22px; }
+        .action-btn:hover::before { opacity: 1; color: var(--bg-lcd); }
+
+        /* ── Bottom nav ── */
+        .bottom-nav {
+            /* FIX 4: in normal flow, not absolute */
+            position: sticky;
+            bottom: 0;
+            height: 52px;
+            border-top: var(--border-width) solid var(--ink-main);
+            background: var(--bg-lcd-darker);
+            display: flex;
+            z-index: 10;
+            flex-shrink: 0;
+        }
+
+        .nav-icon { flex: 1; border-right: var(--border-width) solid var(--ink-main); display: flex; justify-content: center; align-items: center; }
+        .nav-icon:last-child { border-right: none; }
+        .nav-icon:hover { background: var(--ink-main); color: var(--bg-lcd); }
+        .nav-icon:hover svg path { fill: var(--bg-lcd); }
+
+        .icon-svg { width: 26px; height: 26px; }
+        .icon-svg path { fill: var(--ink-main); }
+
+        .hex-data { display: none; }
+
+        /* ═══════════════════════════════════════════
+           TABLET: 600px+
+        ═══════════════════════════════════════════ */
+        @media (min-width: 600px) {
+            body { padding: 1rem; align-items: center; }
+
+            .device-wrapper {
+                padding: 16px;
+                border-radius: 16px;
+                box-shadow:
+                    inset -2px -2px 10px var(--bezel-shadow),
+                    inset 2px 2px 10px var(--bezel-highlight),
+                    0 12px 32px rgba(0,0,0,0.8);
+            }
+
+            .screen-bezel {
+                padding: 6px;
+                border-radius: 6px;
+                box-shadow: inset 0 0 16px rgba(0,0,0,1);
+            }
+
+            .screen {
+                border-radius: 4px;
+                border: var(--border-width) solid var(--ink-main);
+                min-height: calc(100svh - 64px);
+            }
+
+            /* Switch to side-by-side layout */
+            .main-display {
+                flex-direction: row;
+                overflow: hidden;
+                /* FIX 1b: fill remaining screen height */
+                height: calc(100svh - 120px);
+            }
+
+            /* Sidebar becomes vertical column again */
+            .sidebar {
+                flex-direction: column;
+                width: 200px;
+                flex-shrink: 0;
+                border-bottom: none;
+                border-right: var(--border-width) solid var(--ink-main);
+                background: var(--bg-lcd-darker);
+                overflow-y: auto;
+                padding: 16px;
+            }
+
+            .avatar-container {
+                width: 100%;
+                height: auto;
+                aspect-ratio: 1;
+            }
+
+            .pixel-pet { width: 80px; height: 80px; }
+
+            .sys-message { display: flex; flex-direction: column; gap: 6px; margin-top: auto; }
+
+            .log-feed {
+                overflow-y: auto;
+                padding: 24px;
+            }
+
+            .hex-data {
+                display: block;
+                position: absolute;
+                top: 50%;
+                left: -18px;
+                transform: translateY(-50%) rotate(-90deg);
+                font-size: 12px;
+                color: var(--ink-ghost);
+                letter-spacing: 2px;
+                opacity: 0.5;
+            }
+
+            .entry-title { font-size: 30px; }
+            .stat-label { font-size: 18px; }
+        }
+
+        /* ═══════════════════════════════════════════
+           DESKTOP: 900px+  — full original design
+        ═══════════════════════════════════════════ */
+        @media (min-width: 900px) {
+            body { padding: 0; align-items: stretch; }
+
+            .device-wrapper {
+                padding: 0;
+                border-radius: 0;
+                box-shadow: none;
+                display: flex;
+                flex-direction: column;
+                min-height: 100svh;
+            }
+
+            .screen-bezel {
+                padding: 0;
+                border-radius: 0;
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+            }
+
+            .screen {
+                border-radius: 0;
+                border-left: none;
+                border-right: none;
+                min-height: 0;
+                height: 100svh;
+                max-height: none;
+            }
+
+            .main-display { height: calc(100% - 60px); }
+            .sidebar { width: 280px; padding: 20px; }
+            .pixel-pet { width: 120px; height: 120px; }
+            .entry-title { font-size: 32px; }
+            .stat-label { font-size: 18px; }
+            .bottom-nav { height: 60px; }
+            .icon-svg { width: 32px; height: 32px; }
+            .telemetry-bar .stat-block { padding: 8px 12px; gap: 3px; min-height: 58px; }
+        }
+
+        /* ── Post content styles ── */
+        .post-content p { font-size: 20px; line-height: 1.6; margin-bottom: 14px; }
+        .post-content h2 { font-size: 26px; margin-top: 24px; margin-bottom: 8px; border-bottom: 2px dotted var(--ink-ghost); padding-bottom: 4px; }
+        .post-content h3 { font-size: 22px; margin-top: 18px; margin-bottom: 6px; }
+        .post-content ul, .post-content ol { padding-left: 22px; margin-bottom: 14px; font-size: 20px; line-height: 1.6; }
+        .post-content img { max-width: 100%; border: 2px solid var(--ink-main); display: block; margin: 16px 0; }
+        .post-content a { text-decoration: underline; }
+        .post-content blockquote { border-left: 4px solid var(--ink-main); padding-left: 14px; margin: 14px 0; color: var(--ink-ghost); font-size: 20px; }
+        .post-content strong { color: var(--ink-main); background: var(--ink-ghost-light); padding: 0 3px; }
+        .post-content hr { border: none; border-top: 2px dotted var(--ink-ghost); margin: 20px 0; }
+
+        @media (min-width: 900px) {
+            .post-content p { font-size: 22px; }
+            .post-content h2 { font-size: 28px; }
+        }
+
+        /* ── Section labels ── */
+        .section-label {
+            font-size: 16px;
+            color: var(--ink-ghost);
+            letter-spacing: 2px;
+            padding-bottom: 8px;
+            border-bottom: 2px dotted var(--ink-ghost);
+            margin-bottom: 4px;
+        }
+
+        .archive-divider {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 8px 0;
+        }
+        .archive-divider::before, .archive-divider::after {
+            content: '';
+            flex: 1;
+            height: 2px;
+            background: repeating-linear-gradient(90deg, var(--ink-ghost) 0, var(--ink-ghost) 4px, transparent 4px, transparent 8px);
+        }
+        .archive-label {
+            font-size: 16px;
+            color: var(--ink-ghost);
+            letter-spacing: 1px;
+            white-space: nowrap;
+        }
+
+        .archive-entry { gap: 6px; }
+        .entry-title--small { font-size: 22px; }
+
+        .creators-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 16px;
+            margin-top: 8px;
+        }
+        @media (min-width: 600px) { .creators-grid { grid-template-columns: 1fr 1fr; } }
+        @media (min-width: 900px) { .creators-grid { grid-template-columns: 1fr 1fr 1fr; } }
+
+        .creator-card {
+            border: var(--border-width) solid var(--ink-main);
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            background: var(--bg-lcd-darker);
+        }
+        .creator-card:hover { background: var(--ink-main); }
+        .creator-card:hover .creator-name,
+        .creator-card:hover .creator-desc,
+        .creator-card:hover .action-btn,
+        .creator-card:hover .creator-platform { color: var(--bg-lcd); border-color: var(--bg-lcd); }
+        .creator-card:hover .entry-id { background: var(--bg-lcd); color: var(--ink-main); }
+        .creator-meta { display: flex; gap: 10px; align-items: center; font-size: 16px; }
+        .creator-platform { color: var(--ink-ghost); font-size: 16px; }
+        .creator-name { font-size: 22px; }
+        .creator-desc { font-size: 18px; color: var(--ink-ghost); line-height: 1.3; flex: 1; }
+    </style>
+</head>
+<body>
+<div class="device-wrapper">
+    <div class="screen-bezel">
+        <div class="screen">
+
+            <header class="telemetry-bar">
+                <div class="stat-block">
+                    <span class="stat-label">LOGS</span>
+                    <span class="stat-sub" id="sub-logs"></span>
+                    <div class="progress-bar"><div class="progress-fill" id="bar-logs" style="width:0%"></div></div>
+                </div>
+                <div class="stat-block">
+                    <span class="stat-label">FOCUS</span>
+                    <span class="stat-sub" id="sub-focus"></span>
+                    <div class="progress-bar"><div class="progress-fill" id="bar-focus" style="width:0%"></div></div>
+                </div>
+                <div class="stat-block">
+                    <span class="stat-label">CAFF</span>
+                    <span class="stat-sub" id="sub-caff"></span>
+                    <div class="progress-bar"><div class="progress-fill" id="bar-caff" style="width:0%"></div></div>
+                </div>
+                <div class="stat-block">
+                    <span class="stat-label">SLEEP</span>
+                    <span class="stat-sub" id="sub-sleep"></span>
+                    <div class="progress-bar"><div class="progress-fill" id="bar-sleep" style="width:0%"></div></div>
+                </div>
+                <div class="stat-block">
+                    <span class="stat-label">MOOD</span>
+                    <span class="stat-sub" id="sub-mood"></span>
+                    <div class="progress-bar"><div class="progress-fill" id="bar-mood" style="width:0%"></div></div>
+                </div>
+                <div class="stat-block">
+                    <span class="stat-label">SYS</span>
+                    <span class="stat-sub" id="sub-sys"></span>
+                    <div class="progress-bar"><div class="progress-fill" id="bar-sys" style="width:0%"></div></div>
+                </div>
+            </header>
+
+            <main class="main-display">
+                <aside class="sidebar">
+                    <div class="avatar-container">
+                        <div class="hex-data">0x0F88 0x9A12</div>
+                        <div class="pixel-pet">
+                            <svg class="pet-ghost" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M9 3H15V5H17V7H19V11H21V17H19V20H17V22H13V20H11V22H7V20H5V17H3V11H5V7H7V5H9V3Z" fill="var(--ink-ghost)"/>
+                                <rect x="8" y="11" width="2" height="2" fill="var(--bg-lcd)"/>
+                                <rect x="14" y="11" width="2" height="2" fill="var(--bg-lcd)"/>
+                                <rect x="11" y="13" width="2" height="1" fill="var(--bg-lcd)"/>
+                            </svg>
+                            <svg class="pet-main" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <rect x="10" y="0" width="1" height="2" fill="var(--ink-main)"/>
+                                <rect x="11" y="2" width="1" height="2" fill="var(--ink-main)"/>
+                                <rect x="10" y="4" width="1" height="2" fill="var(--ink-main)"/>
+                                <rect x="14" y="1" width="1" height="2" fill="var(--ink-main)"/>
+                                <rect x="13" y="3" width="1" height="2" fill="var(--ink-main)"/>
+                                <rect x="14" y="5" width="1" height="2" fill="var(--ink-main)"/>
+                                <path fill-rule="evenodd" clip-rule="evenodd" d="M10 5H14V6H16V7H18V9H19V14H20V17H19V19H17V20H15V21H9V20H7V19H5V17H4V14H5V9H6V7H8V6H10V5ZM10 6H14V7H16V9H18V14H19V17H18V19H16V20H14V19H10V20H8V19H6V17H5V14H6V9H8V7H10V6Z" fill="var(--ink-main)"/>
+                                <g class="face-group">
+                                <path d="M8 11L9 10L10 11L9 12L8 11Z" fill="var(--ink-main)"/>
+                                <path d="M14 11L15 10L16 11L15 12L14 11Z" fill="var(--ink-main)"/>
+                                <rect x="11" y="12" width="2" height="1" fill="var(--ink-main)"/>
+                                </g>
+                                <rect x="20" y="18" width="4" height="1" fill="var(--ink-main)"/>
+                                <rect x="21" y="17" width="2" height="1" fill="var(--ink-main)"/>
+                                <rect x="22" y="16" width="1" height="1" fill="var(--ink-main)"/>
+                            </svg>
+                        </div>
+                    </div>
+
+                    <div class="sys-info">
+                        <div class="info-line">
+                            <span class="info-label">NAME</span>
+                            <span>HARSHA</span>
+                        </div>
+                        <div class="info-line" style="flex-direction:column; gap:2px;">
+                            <span class="info-label">STATUS</span>
+                            <span style="font-size:16px;">CURRENTLY:<br>SIDE-QUESTING</span>
+                        </div>
+                        <div class="info-line" style="flex-direction:column; gap:2px;">
+                            <span class="info-label">WATCHING</span>
+                            <span style="font-size:16px;">THE ROOKIE</span>
+                        </div>
+                        <div class="info-line" style="flex-direction:column; gap:2px;">
+                            <span class="info-label">READING</span>
+                            <span style="font-size:16px;">ZERO TO ONE</span>
+                        </div>
+                    </div>
+
+                    <div class="sys-message sys-info">
+                        <span class="info-label" style="font-size:14px;">SYS_MESSAGE:</span>
+                        <p id="sys-msg" style="font-size:16px; color:var(--ink-main);">AWAITING INPUT...<br>MEMORY FRAGMENTED.</p>
+                    </div>
+                </aside>
+
+                <section class="log-feed">
+                    {{ content | safe }}
+                </section>
+            </main>
+
+            <footer class="bottom-nav">
+                <a href="/" class="nav-icon" title="Home">
+                    <svg class="icon-svg" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+                </a>
+                <a href="/about/" class="nav-icon" title="About Me">
+                    <svg class="icon-svg" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 4c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 12c-2.67 0-8 1.34-8 4v1h16v-1c0-2.66-5.33-4-8-4z"/></svg>
+                </a>
+                <a href="#" class="nav-icon" title="Search" id="search-btn" onclick="toggleSearch(event)">
+                    <svg class="icon-svg" viewBox="0 0 24 24"><path d="M15.5 14H14.7L14.4 13.7C15.4 12.5 16 11.1 16 9.5C16 5.9 13.1 3 9.5 3C5.9 3 3 5.9 3 9.5C3 13.1 5.9 16 9.5 16C11.1 16 12.5 15.4 13.7 14.4L14 14.7V15.5L19 20.5L20.5 19L15.5 14ZM9.5 14C7 14 5 12 5 9.5C5 7 7 5 9.5 5C12 5 14 7 14 9.5C14 12 12 14 9.5 14Z"/></svg>
+                </a>
+                <a href="https://www.linkedin.com/in/harsha-vardan-hariprasad/" target="_blank" class="nav-icon" title="LinkedIn">
+                    <svg class="icon-svg" viewBox="0 0 24 24"><path d="M19 3H5C3.9 3 3 3.9 3 5v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-9 14H7v-7h3v7zm-1.5-8.3c-1 0-1.7-.8-1.7-1.7s.8-1.7 1.7-1.7 1.7.8 1.7 1.7-.7 1.7-1.7 1.7zM17 17h-3v-3.7c0-1-.8-1.8-1.8-1.8s-1.8.8-1.8 1.8V17H7.5v-7H10v1c.5-.8 1.5-1.3 2.5-1.3 1.9 0 3.5 1.6 3.5 3.5V17z"/></svg>
+                </a>
+                <a href="mailto:hvhp2000@hotmail.com" class="nav-icon" title="Contact">
+                    <svg class="icon-svg" viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
+                </a>
+            </footer>
+
+            <!-- Search overlay -->
+            <div id="search-overlay" style="display:none; position:absolute; bottom:60px; left:0; right:0; background:var(--bg-lcd-darker); border-top:var(--border-width) solid var(--ink-main); padding:12px 16px; z-index:20;">
+                <input id="search-input" type="text" placeholder="SEARCH LOGS..." oninput="runSearch(this.value)"
+                    style="width:100%; background:transparent; border:var(--border-width) solid var(--ink-main); color:var(--ink-main); font-family:var(--font-main); font-size:20px; padding:6px 10px; text-transform:uppercase; outline:none;">
+                <div id="search-results" style="margin-top:10px; display:flex; flex-direction:column; gap:8px; max-height:200px; overflow-y:auto;"></div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+  if (window.netlifyIdentity) {
+    window.netlifyIdentity.on("init", user => {
+      if (!user) {
+        window.netlifyIdentity.on("login", () => {
+          document.location.href = "/admin/";
+        });
+      }
+    });
+  }
+
+  // ── Dynamic telemetry bars ──
+  const timeSlots = [
+    { hours: [0,1,2,3,4], name: "DOOMSCROLL HOURS",
+      bars: { logs:95, focus:5, caff:5, sleep:5, mood:20, sys:35 },
+      subs: { logs:"POSTING", focus:"404", caff:"CRASHED", sleep:"LOL", mood:"VOID.EXE", sys:"BARELY" },
+      msg: "POSTING AT 2AM.\nWHO ELSE FEELS THIS?" },
+    { hours: [5,6,7], name: "ACCIDENTAL WAKEUP",
+      bars: { logs:15, focus:8, caff:20, sleep:85, mood:10, sys:50 },
+      subs: { logs:"DORMANT", focus:"NULL", caff:"LOADING", sleep:"SURPLUS", mood:"???", sys:"BOOTING" },
+      msg: "ALARM SNOOZED 4X.\nCONSCIOUSNESS: OPT." },
+    { hours: [8,9,10], name: "COFFEE LOADING",
+      bars: { logs:40, focus:25, caff:95, sleep:55, mood:30, sys:65 },
+      subs: { logs:"SPARSE", focus:"BUFFERING", caff:"CRITICAL", sleep:"DEBT", mood:"ERROR", sys:"WARMING" },
+      msg: "SECOND COFFEE.\nNOT READY FOR EYES." },
+    { hours: [11,12], name: "ACTUALLY PRODUCTIVE",
+      bars: { logs:70, focus:75, caff:80, sleep:45, mood:65, sys:90 },
+      subs: { logs:"ACTIVE", focus:"ONLINE", caff:"OPTIMAL", sleep:"MANAGED", mood:"STABLE", sys:"NOMINAL" },
+      msg: "PEAK WINDOW OPEN.\nPROTECT AT ALL COSTS." },
+    { hours: [13,14], name: "LUNCH UNCERTAINTY",
+      bars: { logs:55, focus:45, caff:60, sleep:50, mood:55, sys:75 },
+      subs: { logs:"SCROLLING", focus:"WAVERING", caff:"MEDIUM", sleep:"FOOD COMA", mood:"MEH", sys:"OK I GUESS" },
+      msg: "20 MINS TO DECIDE.\nATE DESK FOOD ANYWAY." },
+    { hours: [15,16], name: "THE CRASH",
+      bars: { logs:45, focus:15, caff:90, sleep:40, mood:20, sys:55 },
+      subs: { logs:"PASSIVE", focus:"CRASHED", caff:"EMERGENCY", sleep:"DESPERATE", mood:"WHY", sys:"CRITICAL" },
+      msg: "3PM SLUMP ACTIVE.\nSTARING. NOTHING. YEP." },
+    { hours: [17,18], name: "SECOND WIND",
+      bars: { logs:70, focus:60, caff:50, sleep:30, mood:65, sys:85 },
+      subs: { logs:"RISING", focus:"RECOVERING", caff:"SUSTAINED", sleep:"MINIMAL", mood:"RISING", sys:"STABLE" },
+      msg: "MYSTERIOUSLY GOOD\nAT EVERYTHING AGAIN." },
+    { hours: [19,20,21], name: "GOLDEN HOUR",
+      bars: { logs:85, focus:40, caff:15, sleep:25, mood:85, sys:90 },
+      subs: { logs:"PEAK", focus:"AMBIENT", caff:"FADING", sleep:"MINIMAL", mood:"PEAK", sys:"OPTIMAL" },
+      msg: "FINALLY A PERSON.\nTEXTING BACK. HUMAN." },
+    { hours: [22,23], name: "DOOMSCROLL BEGINS",
+      bars: { logs:90, focus:10, caff:10, sleep:15, mood:45, sys:60 },
+      subs: { logs:"LATE POSTS", focus:"NONE", caff:"DEPLETED", sleep:"IGNORING", mood:"CHAOTIC", sys:"DEGRADING" },
+      msg: "SHOULD BE ASLEEP.\nAPARTMENT TOUR. 2019." },
+  ];
+
+  function setTelemetry() {
+    const h = new Date().getHours();
+    const slot = timeSlots.find(s => s.hours.includes(h)) || timeSlots[2];
+    const keys = ['logs','focus','caff','sleep','mood','sys'];
+    keys.forEach(k => {
+      const bar = document.getElementById('bar-' + k);
+      const sub = document.getElementById('sub-' + k);
+      if (bar) {
+        bar.style.transition = 'width 1.2s ease';
+        bar.style.width = slot.bars[k] + '%';
+      }
+      if (sub) sub.textContent = slot.subs[k];
+    });
+    const sysMsg = document.getElementById('sys-msg');
+    if (sysMsg) sysMsg.innerHTML = slot.msg.replace('\n', '<br>');
+  }
+
+  setTelemetry();
+
+  // ── Search ──
+  const searchIndex = [
+    {% for post in collections.posts %}
+    { title: {{ post.data.title | dump | safe }}, excerpt: {{ post.data.excerpt | dump | safe }}, url: "{{ post.url }}", category: "{{ post.data.category }}", date: "{{ post.date | blogdate }}" },
+    {% endfor %}
+  ];
+
+  function toggleSearch(e) {
+    e.preventDefault();
+    const overlay = document.getElementById('search-overlay');
+    const isVisible = overlay.style.display !== 'none';
+    overlay.style.display = isVisible ? 'none' : 'block';
+    if (!isVisible) {
+      document.getElementById('search-input').focus();
+      document.getElementById('search-results').innerHTML = '';
+    }
+  }
+
+  function runSearch(query) {
+    const results = document.getElementById('search-results');
+    if (!query.trim()) { results.innerHTML = ''; return; }
+    const q = query.toLowerCase();
+    const matches = searchIndex.filter(p =>
+      p.title.toLowerCase().includes(q) ||
+      p.excerpt.toLowerCase().includes(q) ||
+      p.category.toLowerCase().includes(q)
+    );
+    if (matches.length === 0) {
+      results.innerHTML = '<span style="font-size:16px; color:var(--ink-ghost);">NO RECORDS FOUND.</span>';
+      return;
+    }
+    results.innerHTML = matches.map(p => `
+      <a href="${p.url}" style="display:block; border:var(--border-width) solid var(--ink-main); padding:6px 10px; background:var(--bg-lcd);">
+        <div style="font-size:14px; color:var(--ink-ghost);">${p.date} [${p.category}]</div>
+        <div style="font-size:20px;">${p.title}</div>
+      </a>
+    `).join('');
+  }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+      document.getElementById('search-overlay').style.display = 'none';
+    }
+  });
+
+  // ── Pixel pet interaction ──
+  const petMessages = [
+    "HELLO OPERATOR.\nSYSTEM NOMINAL.",
+    "YOU FOUND ME.\nCOOKIE ACQUIRED.",
+    "STOP CLICKING ME.\nI AM WORKING.",
+    "ERROR 418:\nI AM A TEAPOT.",
+    "MEMORY USAGE: 100%\n(MOSTLY SNACKS)",
+    "REBOOTING...\njk lol",
+    "THREAT DETECTED:\nMONDAY MORNING.",
+    "UPTIME: FOREVER.\nSEND HELP.",
+    "DO YOU EVER\nFEEL LIKE A PET?",
+    "BOOP REGISTERED.\nFEELING BOOPED.",
+  ];
+
+  const petFaces = [
+    // normal
+    `<path d="M8 11L9 10L10 11L9 12L8 11Z" fill="var(--ink-main)"/>
+     <path d="M14 11L15 10L16 11L15 12L14 11Z" fill="var(--ink-main)"/>
+     <rect x="11" y="12" width="2" height="1" fill="var(--ink-main)"/>`,
+    // happy
+    `<rect x="8" y="11" width="2" height="2" fill="var(--ink-main)"/>
+     <rect x="14" y="11" width="2" height="2" fill="var(--ink-main)"/>
+     <path d="M10 13L11 14L13 14L14 13" stroke="var(--ink-main)" stroke-width="1" fill="none"/>`,
+    // surprised
+    `<rect x="8" y="10" width="3" height="3" fill="var(--ink-main)"/>
+     <rect x="13" y="10" width="3" height="3" fill="var(--ink-main)"/>
+     <rect x="10" y="13" width="4" height="2" fill="var(--ink-main)"/>`,
+    // sleepy
+    `<rect x="8" y="11" width="3" height="1" fill="var(--ink-main)"/>
+     <rect x="13" y="11" width="3" height="1" fill="var(--ink-main)"/>
+     <rect x="11" y="13" width="2" height="1" fill="var(--ink-main)"/>`,
+    // wink
+    `<rect x="8" y="11" width="2" height="2" fill="var(--ink-main)"/>
+     <rect x="13" y="11" width="3" height="1" fill="var(--ink-main)"/>
+     <path d="M10 13L11 14L13 14L14 13" stroke="var(--ink-main)" stroke-width="1" fill="none"/>`,
+  ];
+
+  let petClickCount = 0;
+  const petContainer = document.querySelector('.avatar-container');
+  const sysMsg = document.getElementById('sys-msg');
+
+  if (petContainer) {
+    petContainer.style.cursor = 'pointer';
+    petContainer.addEventListener('click', () => {
+      petClickCount++;
+      const msg = petMessages[petClickCount % petMessages.length];
+      const face = petFaces[petClickCount % petFaces.length];
+
+      // update sys message
+      if (sysMsg) {
+        sysMsg.innerHTML = msg.replace('\n', '<br>');
+        sysMsg.style.color = 'var(--ink-main)';
+      }
+
+      // swap pet face
+      const petMain = petContainer.querySelector('.pet-main');
+      if (petMain) {
+        const faceGroup = petMain.querySelector('.face-group');
+        if (faceGroup) faceGroup.innerHTML = face;
+      }
+
+      // bounce animation
+      const pet = petContainer.querySelector('.pixel-pet');
+      if (pet) {
+        pet.style.animation = 'none';
+        pet.style.transform = 'scale(1.2)';
+        setTimeout(() => {
+          pet.style.transform = 'scale(1)';
+          setTimeout(() => {
+            pet.style.animation = 'float 4s ease-in-out infinite';
+          }, 150);
+        }, 150);
+      }
+    });
+  }
+</script>
+</body>
+</html>

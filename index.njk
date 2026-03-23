@@ -1,0 +1,44 @@
+---
+layout: base.njk
+---
+{% set postCount = collections.posts | length %}
+{% set reversedPosts = collections.posts | reverse %}
+
+<div class="section-label">// LATEST TRANSMISSIONS</div>
+
+{% for post in reversedPosts %}
+{% if loop.index <= 3 %}
+{% set seqNum = postCount - loop.index0 %}
+<article class="log-entry featured">
+    <div class="entry-meta">
+        <span class="entry-id">SEQ_{{ seqNum | seqformat }}</span>
+        <span>{{ post.date | blogdate }}</span>
+        <span>[{{ post.data.category }}]</span>
+    </div>
+    <h2 class="entry-title">{{ post.data.title }}</h2>
+    <p class="entry-excerpt">{{ post.data.excerpt }}</p>
+    <a href="{{ post.url }}" class="action-btn">Read Record</a>
+</article>
+{% endif %}
+{% endfor %}
+
+{% if postCount > 3 %}
+<div class="archive-divider">
+    <span class="archive-label">// ARCHIVE :: {{ postCount - 3 }} RECORDS</span>
+</div>
+
+{% for post in reversedPosts %}
+{% if loop.index > 3 %}
+{% set seqNum = postCount - loop.index0 %}
+<article class="log-entry archive-entry">
+    <div class="entry-meta">
+        <span class="entry-id">SEQ_{{ seqNum | seqformat }}</span>
+        <span>{{ post.date | blogdate }}</span>
+        <span>[{{ post.data.category }}]</span>
+    </div>
+    <h2 class="entry-title entry-title--small">{{ post.data.title }}</h2>
+    <a href="{{ post.url }}" class="action-btn">Read Record</a>
+</article>
+{% endif %}
+{% endfor %}
+{% endif %}
