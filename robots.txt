@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://ubiquitous-brigadeiros-f7e184.netlify.app/sitemap.xml

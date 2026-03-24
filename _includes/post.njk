@@ -6,6 +6,7 @@ layout: base.njk
         <span class="entry-id">RECORD</span>
         <span>{{ date | blogdate }}</span>
         <span>[{{ category | upper }}]</span>
+        <span>{{ content | readingtime }}</span>
     </div>
     <h2 class="entry-title">{{ title }}</h2>
     <div class="post-content" style="margin-top: 14px;">
@@ -13,3 +14,20 @@ layout: base.njk
     </div>
     <a href="/" class="action-btn" style="margin-top: 20px;">← Back to Logs</a>
 </article>
+
+<div class="log-entry" style="margin-top: 40px;">
+    <div class="entry-meta">
+        <span class="entry-id">COMMENTS</span>
+        <span>[OPEN CHANNEL]</span>
+    </div>
+    <div id="comments" style="margin-top: 12px;">
+        <script src="https://utteranc.es/client.js"
+            repo="arza2010/Personal-Blog"
+            issue-term="pathname"
+            label="comment"
+            theme="github-light"
+            crossorigin="anonymous"
+            async>
+        </script>
+    </div>
+</div>

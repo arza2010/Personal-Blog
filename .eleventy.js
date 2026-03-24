@@ -1,6 +1,13 @@
 module.exports = function(eleventyConfig) {
   eleventyConfig.addPassthroughCopy("admin");
+  eleventyConfig.addPassthroughCopy("robots.txt");
   eleventyConfig.addPassthroughCopy("assets");
+
+  eleventyConfig.addFilter("readingtime", (content) => {
+    const words = content.replace(/<[^>]+>/g, '').split(/\s+/).length;
+    const mins = Math.max(1, Math.round(words / 200));
+    return mins + ' MIN READ';
+  });
 
   eleventyConfig.addFilter("blogdate", (dateObj) => {
     const d = new Date(dateObj);

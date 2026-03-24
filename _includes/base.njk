@@ -5,6 +5,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% if title %}{{ title | upper }} // HARSHA.SYS{% elif page.url == "/" %}HARSHA.SYS // LOGS{% elif page.url == "/about/" %}ABOUT // HARSHA.SYS{% else %}HARSHA.SYS{% endif %}</title>
     <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+
+    <!-- SEO -->
+    <meta name="description" content="{% if excerpt %}{{ excerpt }}{% else %}Currently side-questing. Figuring out what happens when you try to gamify everything — work, habits, thinking, this blog.{% endif %}">
+    <meta name="author" content="Harsha Vardan Hariprasad">
+    <link rel="canonical" href="https://ubiquitous-brigadeiros-f7e184.netlify.app{{ page.url }}">
+
+    <!-- Open Graph (LinkedIn, WhatsApp, Twitter previews) -->
+    <meta property="og:type" content="{% if title %}article{% else %}website{% endif %}">
+    <meta property="og:title" content="{% if title %}{{ title | upper }} // HARSHA.SYS{% else %}HARSHA.SYS // LOGS{% endif %}">
+    <meta property="og:description" content="{% if excerpt %}{{ excerpt }}{% else %}Currently side-questing. Figuring out what happens when you try to gamify everything — work, habits, thinking, this blog.{% endif %}">
+    <meta property="og:url" content="https://ubiquitous-brigadeiros-f7e184.netlify.app{{ page.url }}">
+    <meta property="og:site_name" content="HARSHA.SYS">
+    <meta property="og:image" content="https://ubiquitous-brigadeiros-f7e184.netlify.app/assets/og-image.png">
+
+    <!-- Twitter card -->
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="{% if title %}{{ title | upper }} // HARSHA.SYS{% else %}HARSHA.SYS // LOGS{% endif %}">
+    <meta name="twitter:description" content="{% if excerpt %}{{ excerpt }}{% else %}Currently side-questing. Figuring out what happens when you try to gamify everything — work, habits, thinking, this blog.{% endif %}">
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
@@ -370,6 +389,10 @@
             .icon-svg { width: 32px; height: 32px; }
             .telemetry-bar .stat-block { padding: 8px 12px; gap: 3px; min-height: 58px; }
         }
+
+        /* ── Comments (Utterances override) ── */
+        .utterances { max-width: 100% !important; }
+        .utterances-frame { border: var(--border-width) solid var(--ink-main) !important; }
 
         /* ── Post content styles ── */
         .post-content p { font-size: 20px; line-height: 1.6; margin-bottom: 14px; }
